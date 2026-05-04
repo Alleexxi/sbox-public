@@ -110,8 +110,8 @@ internal static class CloneHelpers
 
 		if ( originalValue is null || ReflectionQueryCache.IsTypeCloneableByCopy( valueType ) )
 		{
-			// Embedded resources are deep-copied to carry any inline generator data over
-			if ( originalValue is not Resource { EmbeddedResource: not null } )
+			// Embedded resources are deep-copied to carry any inline generator data over, only when in the editor.
+			if ( !Application.IsEditor || !ReflectionQueryCache.IsInlineEmbeddedResource( originalValue, valueType ) )
 			{
 				SetMemberValue( member, target, originalValue );
 				return;
