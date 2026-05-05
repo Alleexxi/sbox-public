@@ -379,11 +379,13 @@ public partial class ClothingContainer
 	}
 
 	/// <summary>
-	/// Create the container from the local user's setup
+	/// Create the container from the local user's setup, stripped of any unowned items.
 	/// </summary>
 	public static ClothingContainer CreateFromLocalUser()
 	{
-		return CreateFromJson( Avatar.AvatarJson );
+		var container = CreateFromJson( Avatar.AvatarJson );
+		container.RemoveUnownedItems();
+		return container;
 	}
 
 	/// <summary>
@@ -404,6 +406,9 @@ public partial class ClothingContainer
 	/// </summary>
 	public void RemoveUnownedItems()
 	{
+		if ( !Services.Inventory.HasLoaded )
+			return;
+
 		Clothing.RemoveAll( entry =>
 		{
 			if ( entry.Clothing is not null )
