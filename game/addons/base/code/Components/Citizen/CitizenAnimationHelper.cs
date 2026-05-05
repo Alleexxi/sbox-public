@@ -392,12 +392,12 @@ public sealed class CitizenAnimationHelper : Component, Component.ExecuteInEdito
 	public enum SittingStyle
 	{
 		None,
+		Chair = 1,
 		Chair01 = 1,
-		Chair = 1, // alias for backward compatibility
 		Chair02 = 2,
 		Chair03 = 3,
+		Floor = 4,
 		Ground01 = 4,
-		Floor = 4, // alias for backward compatibility
 		Ground02 = 5,
 		Ground03 = 6,
 		Ground04 = 7
