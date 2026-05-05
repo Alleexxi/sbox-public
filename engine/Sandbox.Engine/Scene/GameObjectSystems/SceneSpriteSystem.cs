@@ -2,6 +2,7 @@ namespace Sandbox;
 
 using Sandbox.Hashing;
 using Sandbox.Rendering;
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Frozen;
 using System.Runtime.InteropServices;
@@ -20,10 +21,20 @@ public sealed class SceneSpriteSystem : GameObjectSystem<SceneSpriteSystem>
 		Listen( Stage.FinishUpdate, 1, UpdateSprites, "UpdateSprites" ); // We want to upload after particles update
 	}
 
+	public override void Dispose()
+	{
+		if ( _sharedSprites != null )
+		{
+			ArrayPool<SpriteBatchSceneObject.SpriteData>.Shared.Return( _sharedSprites );
+			_sharedSprites = null;
+		}
+		base.Dispose();
+	}
+
 	private readonly ConcurrentBag<Guid> _activeParticleEmitters = new();
 	private readonly ConcurrentBag<(Guid id, ulong group, IBatchedParticleSpriteRenderer system, int offset, int count, int splotCount, BBox bounds)> _particleProcessingResults = new();
 	private HashSet<Guid> _registeredSpriteRenderers = new();
-	private SpriteBatchSceneObject.SpriteData[] _sharedSprites = [];
+	private SpriteBatchSceneObject.SpriteData[] _sharedSprites;
 	private readonly List<SystemOffset> _systemOffsets = [];
 	private readonly List<SpriteRenderer> _allSprites = new();
 	private readonly HashSet<Guid> _activeParticleIds = new();
@@ -61,8 +72,11 @@ public sealed class SceneSpriteSystem : GameObjectSystem<SceneSpriteSystem>
 		}
 
 		// Here we allocate one big chunk of memory for all particle systems, each writting at a separate offset
-		if ( _sharedSprites.Length < totalParticles )
-			Array.Resize( ref _sharedSprites, totalParticles );
+		if ( _sharedSprites == null || _sharedSprites.Length < totalParticles )
+		{
+			if ( _sharedSprites != null ) ArrayPool<SpriteBatchSceneObject.SpriteData>.Shared.Return( _sharedSprites );
+			_sharedSprites = ArrayPool<SpriteBatchSceneObject.SpriteData>.Shared.Rent( Math.Max( totalParticles, 4096 ) );
+		}
 
 		// Calculate write offsets for each particle system	
 		_systemOffsets.Clear();
